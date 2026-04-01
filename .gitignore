@@ -1,0 +1,29 @@
+# ======================
+# FRONTEND (React)
+# ======================
+stego-front/node_modules/
+stego-front/build/
+stego-front/.env
+
+# ======================
+# BACKEND (Spring Boot)
+# ======================
+backend/target/
+*.class
+
+# ======================
+# LOG FILES
+# ======================
+*.log
+
+# ======================
+# IDE FILES
+# ======================
+.vscode/
+.idea/
+
+# ======================
+# OS FILES
+# ======================
+.DS_Store
+Thumbs.db
