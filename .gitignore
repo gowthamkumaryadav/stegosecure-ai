@@ -27,3 +27,8 @@ backend/target/
 # ======================
 .DS_Store
 Thumbs.db
+
+# DATABASE FILES
+*.db
+*.mv.db
+backend/data/
