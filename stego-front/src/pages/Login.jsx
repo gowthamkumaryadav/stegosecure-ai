@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { auth, provider } from "../firebase";
-import { signInWithPopup } from "firebase/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { signInWithRedirect , getRedirectResult } from "firebase/auth";
+import { useEffect } from "react";
 
 export default function Login() {
 const [username, setUsername] = useState(""); // now acts as EMAIL
@@ -14,7 +15,7 @@ const navigate = useNavigate();
 const location = useLocation();
 const from = location.state?.from || "/encode";
 
-// 🔐 Normal Login
+
 // 🔐 NORMAL LOGIN
 const handleLogin = async () => {
   if (!username.trim() || !password.trim()) {
@@ -68,43 +69,60 @@ const handleLogin = async () => {
   }
 };
 
-
-
 // 🔥 GOOGLE LOGIN (FULLY FIXED)
+
+const BASE_URL = "https://stegosecure-ai-production.up.railway.app"; // ✅ CHANGE THIS
+
+// 👉 CLICK LOGIN BUTTON
 const handleGoogleLogin = async () => {
   try {
-    const result = await signInWithPopup(auth, provider);
-    const gUser = result.user;
-
-    const userData = {
-      username: gUser.email,
-      email: gUser.email,
-    };
-
-    // ✅ STORE USER
-    localStorage.setItem("user", JSON.stringify(userData));
-
-    console.log("🔐 Google user:", userData);
-
-    // 🔥 IMPORTANT: SYNC USER WITH BACKEND
-    await fetch("http://localhost:8081/auth/google-login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: gUser.email,
-      }),
-    });
-
-    alert("✅ Google login successful");
-
-    navigate(from);
-  } catch (err) {
-    console.error("Google Login Error:", err);
+    await signInWithRedirect(auth, provider);
+  } catch (error) {
+    console.error("Redirect error:", error);
     alert("❌ Google login failed");
   }
 };
+
+// 👉 HANDLE REDIRECT RESULT (VERY IMPORTANT)
+useEffect(() => {
+  const handleRedirect = async () => {
+    try {
+      const result = await getRedirectResult(auth);
+
+      if (result && result.user) {
+        const gUser = result.user;
+
+        const userData = {
+          username: gUser.email,
+          email: gUser.email,
+        };
+
+        // ✅ STORE USER
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        console.log("🔥 Google user:", userData);
+
+        // ✅ CALL BACKEND (FIXED URL)
+        await fetch(`${BASE_URL}/auth/google-login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: gUser.email,
+          }),
+        });
+
+        alert("✅ Google login successful");
+        navigate("/dashboard"); // or your route
+      }
+    } catch (err) {
+      console.error("Google redirect error:", err);
+    }
+  };
+
+  handleRedirect();
+}, []);
 return (
 <div className="min-h-screen flex">
 {/* LEFT PANEL */}

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:8081/stego";
+const API = "https://stegosecure-ai-production.up.railway.app";
 
 // ✅ ENCODE
 export const encodeImage = (formData) =>
