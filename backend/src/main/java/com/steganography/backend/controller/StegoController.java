@@ -67,22 +67,18 @@ public class StegoController {
                 return ResponseEntity.badRequest().body("Username missing");
             }
 
-            // ✅ Find or Create User
-            User user = userRepo.findByEmail(username);
+            // ✅ FIXED USER FETCH (NO DUPLICATE INSERT)
+            User user = null;
 
-            if (user == null) {
+            if (username.contains("@")) {
+                user = userRepo.findByEmail(username);
+            } else {
                 user = userRepo.findByUsername(username);
             }
 
             if (user == null) {
-                user = new User();
-
-                if (username.contains("@")) {
-                    user.setEmail(username);
-                }
-
-                user.setUsername(username);
-                userRepo.save(user);
+                return ResponseEntity.status(400)
+                        .body("User not found. Please login again.");
             }
 
             // ✅ Encode
