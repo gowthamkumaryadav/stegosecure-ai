@@ -50,7 +50,24 @@ public class StegoController {
         try {
             System.out.println("🔥 RECEIVED USERNAME: " + username);
 
-            // ✅ Find or Create User (FIXED)
+            // ✅ Validate inputs early
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("No file uploaded");
+            }
+
+            if (message == null || message.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Message is empty");
+            }
+
+            if (password == null || password.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Password is empty");
+            }
+
+            if (username == null || username.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Username missing");
+            }
+
+            // ✅ Find or Create User
             User user = userRepo.findByEmail(username);
 
             if (user == null) {
@@ -58,26 +75,18 @@ public class StegoController {
             }
 
             if (user == null) {
-                // 🔥 AUTO CREATE USER (IMPORTANT)
                 user = new User();
 
                 if (username.contains("@")) {
                     user.setEmail(username);
-                    user.setUsername(username);
-                } else {
-                    user.setUsername(username);
                 }
 
+                user.setUsername(username);
                 userRepo.save(user);
             }
 
-            // ✅ Validate file
-            if (file == null || file.isEmpty()) {
-                return ResponseEntity.badRequest().body("No file uploaded");
-            }
-
-            // ✅ Call service
-            byte[] encodedImage = service.encode(file, message, password, user);
+            // ✅ Encode
+            byte[] encodedImage = service.encode(file, message.trim(), password.trim(), user);
 
             if (encodedImage == null) {
                 return ResponseEntity.status(500).body("Encoding failed");
@@ -91,7 +100,6 @@ public class StegoController {
 
         } catch (Exception e) {
             e.printStackTrace();
-
             return ResponseEntity.status(500)
                     .body("Encoding failed: " + e.getMessage());
         }
