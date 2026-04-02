@@ -2698,3 +2698,6 @@ Caused by: org.h2.mvstore.MVStoreException: The file is locked: C:/Users/rrppa/D
 	at org.h2.mvstore.SingleFileStore.open(SingleFileStore.java:81)
 	at org.h2.mvstore.MVStore.<init>(MVStore.java:286)
 	... 63 more
+2026-04-02 18:01:13.111728+05:30 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "[*]STEGO_DATA"; expected "SAVEPOINT, SCRIPT, SHUTDOWN"; SQL statement:
+STEGO_DATA [42001-232]
