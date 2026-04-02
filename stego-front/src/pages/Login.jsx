@@ -68,9 +68,7 @@ export default function Login() {
     }
   };
 
-  // ===========================
-  // 🔥 GOOGLE LOGIN (FIXED)
-  // ===========================
+  
   // ===========================
 // 🔥 GOOGLE LOGIN BUTTON
 // ===========================
@@ -90,22 +88,21 @@ useEffect(() => {
     try {
       const result = await getRedirectResult(auth);
 
-      // ❗ IMPORTANT: only run if user exists
-      if (!result || !result.user) return;
+      if (!result) return; // 🔥 IMPORTANT
 
       const gUser = result.user;
+
+      if (!gUser) return;
 
       const userData = {
         username: gUser.email,
         email: gUser.email,
       };
 
-      // ✅ STORE USER
       localStorage.setItem("user", JSON.stringify(userData));
 
       console.log("🔥 Google user:", userData);
 
-      // ✅ BACKEND SYNC (SAFE - WILL NOT BREAK LOGIN)
       try {
         await fetch(`${BASE_URL}/auth/google-login`, {
           method: "POST",
@@ -117,16 +114,13 @@ useEffect(() => {
           }),
         });
       } catch (err) {
-        console.warn("Backend sync failed, but continuing:", err);
+        console.warn("Backend sync failed:", err);
       }
 
-      // ✅ SUCCESS FLOW
-      alert("✅ Google login successful");
       navigate("/encode");
 
     } catch (err) {
-      console.error("Google redirect error:", err);
-      // ❌ No alert → prevents false "login failed"
+      console.error("Redirect error:", err);
     }
   };
 
