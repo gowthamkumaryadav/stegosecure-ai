@@ -232,12 +232,4 @@ public class StegoController {
         return ResponseEntity.ok(data);
     }
     
-    @RestController
-    public class CorsFixController {
-
-        @RequestMapping(value = "/**", method = RequestMethod.OPTIONS)
-        public ResponseEntity<?> handleOptions() {
-            return ResponseEntity.ok().build();
-        }
-    }
 }
