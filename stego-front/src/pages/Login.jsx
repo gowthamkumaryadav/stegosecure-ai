@@ -86,9 +86,12 @@ const handleGoogleLogin = async () => {
 useEffect(() => {
   const handleRedirect = async () => {
     try {
+      if(sessionStorage.getitem("googleLogin"))
+        return;
       const result = await getRedirectResult(auth);
+      console.log("Redirectresult:", result);
 
-      if (!result) return; // 🔥 IMPORTANT
+      if (!result || !result.user) return; // 🔥 IMPORTANT
 
       const gUser = result.user;
 
@@ -102,6 +105,7 @@ useEffect(() => {
       localStorage.setItem("user", JSON.stringify(userData));
 
       console.log("🔥 Google user:", userData);
+      sessionStorage.setItem("googleLogin");
 
       try {
         await fetch(`${BASE_URL}/auth/google-login`, {
@@ -114,13 +118,14 @@ useEffect(() => {
           }),
         });
       } catch (err) {
-        console.warn("Backend sync failed:", err);
+        console.warn("Backend sync failed , continuing login");
       }
+      alert("✅ Google login successful");
 
-      navigate("/encode");
+      navigate("/encode" , { replace: true });
 
     } catch (err) {
-      console.error("Redirect error:", err);
+      console.error(" GoogleRedirect error:", err);
     }
   };
 
