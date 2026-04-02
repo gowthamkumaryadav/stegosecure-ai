@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class StegoController {
     // =========================
     // 🔐 ENCODE API
     // =========================
-    @PostMapping("/encode")
+    @PostMapping(value="/encode" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> encode(
             @RequestParam("image") MultipartFile file,
             @RequestParam("message") String message,
@@ -48,6 +49,7 @@ public class StegoController {
     ) {
 
         try {
+        	System.out.println("✅ HIT ENCODE API");
             System.out.println("🔥 RECEIVED USERNAME: " + username);
 
             // ✅ Validate inputs early
@@ -104,7 +106,7 @@ public class StegoController {
     // =========================
     // 🔓 DECODE API
     // =========================
-    @PostMapping("/decode")
+    @PostMapping(value="/decode" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> decode(
             @RequestParam("image") MultipartFile file,
             @RequestParam("password") String password,
