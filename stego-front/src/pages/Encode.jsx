@@ -61,7 +61,7 @@ export default function Encode() {
   };
 
   // 🚀 Encode
-  const handleEncode = async () => {
+ const handleEncode = async () => {
   if (loading) return;
 
   if (!file) return alert("⚠️ Please select an image");
@@ -77,7 +77,6 @@ export default function Encode() {
     userObj = { email: localStorage.getItem("user") };
   }
 
-  // 🔥 SUPPORT BOTH ADMIN + GOOGLE LOGIN
   const username = userObj?.email || userObj?.username;
 
   if (!username) {
@@ -90,8 +89,7 @@ export default function Encode() {
   try {
     const formData = new FormData();
 
-    // ✅ MUST MATCH BACKEND
-    formData.append("image", file);
+    formData.append("image", file);   // ✅ MATCH BACKEND
     formData.append("message", message.trim());
     formData.append("password", password.trim());
     formData.append("username", username);
@@ -100,9 +98,11 @@ export default function Encode() {
 
     const res = await encodeImage(formData);
 
-    if (!res?.data) throw new Error("No response from server");
+    if (!res || !res.data) {
+      throw new Error("No response from server");
+    }
 
-    // ✅ DOWNLOAD IMAGE (FIXED)
+    // ✅ Download image
     const blob = new Blob([res.data], { type: "image/png" });
     const url = window.URL.createObjectURL(blob);
 
@@ -111,29 +111,34 @@ export default function Encode() {
     link.download = "encoded.png";
     document.body.appendChild(link);
     link.click();
-    link.remove();
 
+    document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    // ✅ RESET
+    // ✅ Reset form
     setMessage("");
     setPassword("");
     setFile(null);
     setPreview(null);
 
     alert("✅ Encoding successful!");
+
   } catch (err) {
     console.error("Encode Error:", err);
 
-    // 🔥 FIX: HANDLE BLOB ERROR RESPONSE
-    if (err.response?.data instanceof Blob) {
-      const text = await err.response.data.text();
-      alert(`❌ ${text}`);
-    } else if (err.response) {
-      alert(`❌ ${err.response.data || "Server error"}`);
-    } else {
-      alert("❌ Network error or server not reachable");
+    try {
+      if (err.response?.data instanceof Blob) {
+        const text = await err.response.data.text();
+        alert(`❌ ${text}`);
+      } else if (err.response?.data) {
+        alert(`❌ ${err.response.data}`);
+      } else {
+        alert("❌ Server not reachable");
+      }
+    } catch {
+      alert("❌ Unexpected error occurred");
     }
+
   } finally {
     setLoading(false);
   }
