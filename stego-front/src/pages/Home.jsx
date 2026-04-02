@@ -294,7 +294,7 @@ export default function Home() {
           {/* CONTACT INFO */}
           <div>
             <h3 className="text-white font-medium mb-2">Contact</h3>
-            <p className="text-sm">📧 sanjanapanjala23@gmail.com</p>
+            <p className="text-sm">📧 gowthamkumaryadav13@gmail.com</p>
             <p className="text-sm">🌐 India</p>
           </div>
         </div>
