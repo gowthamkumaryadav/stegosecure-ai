@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:3000") // ✅ FIX CORS
+@CrossOrigin(origins = "*") // ✅ FIXED (ALLOW ALL)
 public class AuthController {
 
     @Autowired
@@ -32,61 +32,96 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User user) {
 
-        String input = user.getUsername(); // email or username
-        String password = user.getPassword();
+        try {
+            String input = user.getUsername();
+            String password = user.getPassword();
 
-        System.out.println("🔐 Login attempt: " + input);
+            System.out.println("🔐 Login attempt: " + input);
 
-        // 🔥 CHECK BOTH EMAIL & USERNAME
-        User existing = repo.findByEmail(input);
+            if (input == null || password == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "error",
+                        "message", "Missing credentials"
+                ));
+            }
 
-        if (existing == null) {
-            existing = repo.findByUsername(input);
-        }
+            // 🔥 CHECK BOTH EMAIL & USERNAME
+            User existing = repo.findByEmail(input);
 
-        if (existing != null && existing.getPassword() != null
-                && existing.getPassword().equals(password)) {
+            if (existing == null) {
+                existing = repo.findByUsername(input);
+            }
 
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "message", "Login Success",
-                    "username", existing.getEmail() != null
-                            ? existing.getEmail()
-                            : existing.getUsername()
+            if (existing != null &&
+                    existing.getPassword() != null &&
+                    existing.getPassword().equals(password)) {
+
+                return ResponseEntity.ok(Map.of(
+                        "status", "success",
+                        "message", "Login Success",
+                        "username", existing.getEmail() != null
+                                ? existing.getEmail()
+                                : existing.getUsername()
+                ));
+            }
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "status", "error",
+                    "message", "Invalid credentials"
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "error",
+                    "message", "Server error"
             ));
         }
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "status", "error",
-                "message", "Invalid credentials"
-        ));
     }
 
     // 🔥 GOOGLE LOGIN (AUTO CREATE USER)
     @PostMapping("/google-login")
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> body) {
 
-        String email = body.get("email");
+        try {
+            String email = body.get("email");
 
-        System.out.println("🌐 Google login: " + email);
+            System.out.println("🌐 Google login: " + email);
 
-        User user = repo.findByEmail(email);
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", "error",
+                        "message", "Email required"
+                ));
+            }
 
-        if (user == null) {
-            System.out.println("⚡ Creating new Google user");
+            User user = repo.findByEmail(email);
 
-            user = new User();
-            user.setEmail(email);
-            user.setUsername(email); // keep consistent
-            user.setPassword(null);  // no password for Google
+            if (user == null) {
+                System.out.println("⚡ Creating new Google user");
 
-            repo.save(user);
+                user = new User();
+                user.setEmail(email);
+                user.setUsername(email);
+                user.setPassword(null);
+
+                repo.save(user);
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Google login success",
+                    "username", user.getEmail()
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "error",
+                    "message", "Google login failed"
+            ));
         }
-
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Google login success",
-                "username", user.getEmail()
-        ));
     }
 }
