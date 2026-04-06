@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { auth, provider } from "../firebase";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth"; // ✅ FIXED
 
 export default function Login() {
-  const [username, setUsername] = useState(""); // email
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -14,11 +14,10 @@ export default function Login() {
   const location = useLocation();
   const from = location.state?.from || "/encode";
 
-  // 🔥 BACKEND URL (FIXED)
   const BASE_URL = "https://stegosecure-ai-production.up.railway.app";
 
   // ===========================
-  // 🔐 NORMAL LOGIN (FIXED)
+  // 🔐 NORMAL LOGIN
   // ===========================
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
@@ -45,8 +44,6 @@ export default function Login() {
       } catch {}
 
       if (response.ok) {
-        alert("✅ Login successful");
-
         const userData = {
           username: data.username || username.trim(),
           email: data.username || username.trim(),
@@ -54,44 +51,25 @@ export default function Login() {
 
         localStorage.setItem("user", JSON.stringify(userData));
 
-        console.log("🔐 Logged in user:", userData);
-
+        alert("✅ Login successful");
         navigate(from);
       } else {
         alert(data.message || "❌ Invalid credentials");
       }
     } catch (err) {
       console.error("Login Error:", err);
-      alert("❌ Network error. Check your connection or backend.");
+      alert("❌ Network error");
     } finally {
       setLoading(false);
     }
   };
 
-  
   // ===========================
-// 🔥 GOOGLE LOGIN BUTTON
-// ===========================
-const handleGoogleLogin = async () => {
-  try {
-    await signInWithRedirect(auth, provider);
-  } catch (error) {
-    console.error("Redirect error:", error);
-  }
-};
-
-// ===========================
-// 🔥 HANDLE REDIRECT RESULT
-// ===========================
-useEffect(() => {
-  const handleRedirect = async () => {
+  // 🔥 GOOGLE LOGIN (POPUP FIX)
+  // ===========================
+  const handleGoogleLogin = async () => {
     try {
-      if(sessionStorage.getitem("googleLogin"))
-        return;
-      const result = await getRedirectResult(auth);
-      console.log("Redirectresult:", result);
-
-      if (!result || !result.user) return; // 🔥 IMPORTANT
+      const result = await signInWithPopup(auth, provider); // ✅ POPUP
 
       const gUser = result.user;
 
@@ -105,8 +83,8 @@ useEffect(() => {
       localStorage.setItem("user", JSON.stringify(userData));
 
       console.log("🔥 Google user:", userData);
-      sessionStorage.setItem("googleLogin");
 
+      // ✅ Backend sync
       try {
         await fetch(`${BASE_URL}/auth/google-login`, {
           method: "POST",
@@ -115,22 +93,33 @@ useEffect(() => {
           },
           body: JSON.stringify({
             email: gUser.email,
+            name: gUser.displayName, // ✅ IMPORTANT
           }),
         });
       } catch (err) {
-        console.warn("Backend sync failed , continuing login");
+        console.warn("Backend sync failed");
       }
+
       alert("✅ Google login successful");
 
-      navigate("/encode" , { replace: true });
+      navigate("/encode", { replace: true }); // ✅ NO LOOP
 
-    } catch (err) {
-      console.error(" GoogleRedirect error:", err);
+    } catch (error) {
+      console.error("Google login error:", error);
+      alert("❌ Google login failed");
     }
   };
 
-  handleRedirect();
-}, [navigate]);
+  // ===========================
+  // 🔥 PREVENT REDIRECT LOOP
+  // ===========================
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+
+    if (user) {
+      navigate("/encode");
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex">
@@ -231,26 +220,6 @@ useEffect(() => {
           </button>
         </div>
       </div>
-
-      {/* ANIMATIONS */}
-      <style>
-        {`
-        .animate-fadeIn {
-          animation: fadeIn 1s ease-in-out;
-        }
-        .animate-slideUp {
-          animation: slideUp 0.6s ease-out;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from { transform: translateY(30px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}
-      </style>
     </div>
   );
 }
